@@ -1,6 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('../data/helpers/index.js');
+
+const router = express.Router();
 
 const generateToken = user => {
   const jwtPayload = {
@@ -12,21 +15,20 @@ const generateToken = user => {
   const jwtSecret = 'how.now.brown.cow.!';
 
   const jwtOptions = {
-    expiresIn: '5m',
+    expiresIn: '1m',
   };
 
   return jwt.sign(jwtPayload, jwtSecret, jwtOptions);
 };
 
-server.post('/login', (req, res) => {
+router.post('/', (req, res) => {
   const creds = req.body;
 
-  db.loginUser(user)
+  db.loginUser(creds)
     .then(user => {
       if (user && bcrypt.compareSync(creds.password, user.password)) {
-        // generate token for specific user.
         const token = generateToken(user);
-        // found the user.
+
         res.status(200).json({ welcome: user.username, token });
       } else {
         res.status(401).json({
@@ -35,7 +37,7 @@ server.post('/login', (req, res) => {
       }
     })
     .catch(err => {
-      res.status(500).json({ err });
+      res.status(500).json({ error: err.message });
     });
 });
 
